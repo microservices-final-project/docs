@@ -18,8 +18,6 @@
 
 ---
 
-## 🔁 **Microservices Development Workflow**
-
 ### 🔸 Branching Strategy
 
 * Feature and bugfix branches:
@@ -29,6 +27,15 @@
 
 ---
 
+## 🔁 **Change managment**
+
+* **Change Proposal (RFC – Request for Change):**
+
+  * Each change begins with a card in the GitHub projects board as a user story in Mode 4, associated with a `/feature` branch, and should contain:
+    - Title
+    - Description in Mike Cohn format (As a [type of user], I want [action], so that [benefit].)
+    - Acceptance criteria written in prose
+
 ### 🔸 Pull Request to `develop`
 
 Upon opening a PR:
@@ -36,20 +43,26 @@ Upon opening a PR:
 * ✅ Static code analysis via **SonarQube**
 * ✅ Dependency vulnerability scan with **Trivy**
 * ✅ Execution of:
-
   * Unit tests
   * Integration tests
-* ✅ Manual approval required
+* ✅ Technical Approval by an architech or a tech lead
 
 📦 **Result**:
-If all checks pass and manual approval is granted → **Merge to `develop`**
+If all checks pass and Technical approval is granted → **Merge to `develop`**
 
 ---
 
 ### 🔸 Pull Request to `stage`
 
 * 🚀 Temporary image deployed to **Stage Cloud Environment**
+
 * ✅ Execution of:
+* ✅ Static code analysis via **SonarQube**
+* ✅ Dependency vulnerability scan with **Trivy**
+* ✅ Execution of:
+  * Unit tests
+  * Integration tests
+* ✅ Technical Approval by an architech or a tech lead
 
   * End-to-End (E2E) tests
   * Performance/Load tests
@@ -62,6 +75,13 @@ If all checks pass and manual approval is granted → **Merge to `develop`**
 ---
 
 ### 🔸 Pull Request to `main`
+* ✅ Rollback file existence verification if a migration was done
+* ✅ Static code analysis via **SonarQube**
+* ✅ Dependency vulnerability scan with **Trivy**
+* ✅ Execution of:
+  * Unit tests
+  * Integration tests
+* ✅ Technical Approval by an architech or a tech lead
 
 * ✅ Requires **manual approval**
 * 🚀 Final image is deployed to the **Production Cloud Environment**
@@ -70,6 +90,76 @@ If all checks pass and manual approval is granted → **Merge to `develop`**
 Successful merge → **Production release**
 
 ---
+
+## 🏷️ Release Tagging
+
+### 📌 Versioning Convention (SemVer)
+
+* `MAJOR.MINOR.PATCH` (e.g., `3.2.1`)
+* Each microservice has its own versioning scheme
+
+### 🔖 Git Tagging:
+
+* Automatic upon merging into the `main` branch
+* Includes release notes as part of the tag
+
+### 🗂️ Visibility:
+
+* Tags accessible via:
+
+  * Git (for developers)
+  * Registry (for DevOps)
+
+---
+
+⏪ **Rollback Plans**
+
+📜 **What is a rollback?**
+
+A rollback is the process of reverting a change that was deployed to production, in case it causes errors or negatively affects users.
+
+🔁 **When to perform a rollback?**
+
+- Critical failures after deployment (500 errors, service outages)
+- Unexpected system behavior
+- Immediate user feedback or negative monitoring alerts
+
+✅ **Simple rollback steps per microservice:**
+
+**1. Detect the issue:**
+- Alerts from tools like Prometheus, Grafana, Sentry, etc.
+- QA or user reports
+
+**2. Identify the last stable version:**
+- Find the previous Git tag (e.g., `v1.2.2`)
+- Validate it is working correctly in staging or previous production
+
+**3. Roll back the code:**
+- Deploy the container with the previous image: `my-service:v1.2.2`
+- Use the CI/CD pipeline manually or with a rollback button
+
+**4. Roll back the database (if applicable):**
+- Use a prepared rollback script (`rollback.sql`)
+- Restore from a backup if the change was disruptive
+
+**5. Verify everything is working again:**
+- Test critical endpoints
+- Check logs and monitoring tools
+
+**6. Document what happened:**
+- Update the change ticket
+- Create a post-mortem analysis task
+
+🧰 **Additional techniques:**
+
+- **Blue/Green Deployments** or **Canary Releases** using:
+  - Kubernetes (via ArgoCD, Spinnaker, etc.)
+  - Spring Boot Actuator + readiness/liveness probes
+
+- **Automatic rollback:**
+  - Configured in CI/CD pipelines to trigger on failed post-deployment tests
+
+
 
 ## 📈 **Monitoring & Observability Stack**
 
